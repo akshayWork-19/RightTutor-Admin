@@ -68,27 +68,54 @@ const Auth: React.FC = () => {
     }
 
     if (isLogin) {
-      // Simulated Check
-      const savedUser = JSON.parse(localStorage.getItem('rt_user_db') || 'null');
-      if (savedUser && savedUser.email === email && savedUser.password === password) {
-        dispatch(setUser(savedUser));
-        dispatch(setAuth(true));
-      } else if (email === 'admin@righttutor.com' && password === 'admin123') {
-        dispatch(setUser({ name: 'Default Admin', email, phone: '', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin' }));
-        dispatch(setAuth(true));
-      } else {
-        setError('Invalid administrative credentials');
-        setFieldErrors({ email: true, password: true });
-      }
+      // Backend Login
+      const fetchLogin = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const result = await response.json();
+
+          if (result.success) {
+            localStorage.setItem('token', result.data.token);
+            dispatch(setUser(result.data.user));
+            dispatch(setAuth(true));
+          } else {
+            setError(result.message || 'Invalid administrative credentials');
+            setFieldErrors({ email: true, password: true });
+          }
+        } catch (err: any) {
+          setError('Failed to connect to authentication server');
+        }
+      };
+      fetchLogin();
     } else {
-      // Simulate registration
-      const newUser = { name, email, password, phone: '', avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}` };
-      localStorage.setItem('rt_user_db', JSON.stringify(newUser));
-      setIsLogin(true); // Switch to login view after signup
-      setName('');
-      setEmail('');
-      setPassword('');
-      alert('Account created successfully. Please login with your credentials.');
+      // Backend Signup
+      const fetchSignup = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/v1/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+          });
+          const result = await response.json();
+
+          if (result.success) {
+            setIsLogin(true); // Switch to login after successful signup
+            setName('');
+            setEmail('');
+            setPassword('');
+            alert('Account created successfully. Please login with your credentials.');
+          } else {
+            setError(result.message || 'Signup failed');
+          }
+        } catch (err: any) {
+          setError('Failed to connect to authentication server');
+        }
+      };
+      fetchSignup();
     }
   };
 
@@ -108,8 +135,8 @@ const Auth: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Full Name"
@@ -117,10 +144,10 @@ const Auth: React.FC = () => {
                 />
               </div>
             )}
-            
+
             <div>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email Address"
@@ -129,8 +156,8 @@ const Auth: React.FC = () => {
             </div>
 
             <div>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -145,7 +172,7 @@ const Auth: React.FC = () => {
               </div>
             )}
 
-            <button 
+            <button
               type="submit"
               className="w-full mt-2 py-4.5 bg-[#FF850A] text-white rounded-[24px] font-bold text-base hover:bg-[#E67809] shadow-xl shadow-[#FF850A]/20 transition-all active:scale-[0.98] py-4"
             >
@@ -154,7 +181,7 @@ const Auth: React.FC = () => {
           </form>
 
           <div className="mt-10 text-center">
-            <button 
+            <button
               onClick={() => {
                 setIsLogin(!isLogin);
                 setError('');
@@ -166,7 +193,7 @@ const Auth: React.FC = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="px-10 py-6 bg-[#FAF6F1]/50 border-t border-[#E5DED4] text-center">
           <p className="text-[9px] text-[#A0A0A0] font-bold uppercase tracking-widest">
             Protected Administrator Access Channel

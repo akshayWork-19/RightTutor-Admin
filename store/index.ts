@@ -124,6 +124,7 @@ const adminSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       localStorage.removeItem('rt_auth');
+      localStorage.removeItem('token');
     },
     triggerLiveSync: (state, action: PayloadAction<string>) => {
       const newLog: SystemLog = {
