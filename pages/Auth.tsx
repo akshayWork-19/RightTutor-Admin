@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUser, setAuth } from '../store';
+import { API_BASE_URL } from '../services/apiService';
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -71,7 +72,7 @@ const Auth: React.FC = () => {
       // Backend Login
       const fetchLogin = async () => {
         try {
-          const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -95,7 +96,7 @@ const Auth: React.FC = () => {
       // Backend Signup
       const fetchSignup = async () => {
         try {
-          const response = await fetch('http://localhost:5000/api/v1/auth/signup', {
+          const response = await fetch(`${API_BASE_URL}/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })
