@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const SOCKET_URL = rawBaseUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
 
 class SocketService {
     private socket: Socket | null = null;
