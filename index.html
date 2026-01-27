@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RightTutor Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme Palette */
+            --bg-app: #FAF9F6;
+            --bg-sidebar: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F9FAFB;
+            --bg-hover: #F3F4F6;
+            --border-ds: rgba(0, 0, 0, 0.05);
+            --text-main: #111827;
+            --text-sub: #4B5563;
+            --text-muted: #9CA3AF;
+            --accent: #FF850A;
+            --ds-radius: 1rem;
+            --ds-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        /* Font Scaling Logic */
+        @media (max-width: 640px) {
+          :root {
+            font-size: 14.4px; /* 10% decrease on mobile */
+          }
+        }
+
+        /* Firebase/Stripe inspired Elevation Logic for Dark Mode */
+        body.dark {
+            --bg-app: #121212;     /* Level 0: Base */
+            --bg-sidebar: #181818; /* Level 0.5: Sidebar */
+            --bg-card: #1E1E1E;    /* Level 1: Surface */
+            --bg-input: #252525;   /* Level 2: Interaction */
+            --bg-hover: #2D2D2D;
+            --border-ds: rgba(255, 255, 255, 0.08);
+            --text-main: #FAFAFA;  /* High-brightness Off-White */
+            --text-sub: #D1D5DB;   
+            --text-muted: #9CA3AF;
+            --ds-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+            background-color: var(--bg-app);
+            color: var(--text-main);
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+            letter-spacing: -0.011em;
+            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ds-card {
+            background: var(--bg-card);
+            border-radius: var(--ds-radius);
+            box-shadow: var(--ds-shadow);
+            border: 1px solid var(--border-ds);
+            overflow: hidden;
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .ds-input {
+            height: 44px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-ds);
+            border-radius: 0.75rem;
+            padding: 0 1rem;
+            font-size: 0.875rem;
+            width: 100%;
+            outline: none;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+        .ds-input:focus {
+            border-color: var(--accent);
+            background-color: var(--bg-card);
+            box-shadow: 0 0 0 3px rgba(255, 133, 10, 0.1);
+        }
+
+        .ds-button {
+            height: 44px;
+            border-radius: 0.75rem;
+            padding: 0 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ds-table-header {
+            background-color: var(--bg-input);
+            border-bottom: 1px solid var(--border-ds);
+            padding: 14px 24px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .ds-table-cell {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-ds);
+            color: var(--text-main);
+        }
+
+        /* Modal specific elevation */
+        .ds-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .ds-modal-content {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            max-width: 580px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-ds);
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .ds-modal-body {
+            overflow-y: auto;
+            padding: 32px;
+            scrollbar-width: none; /* Hide scrollbar for clean look */
+        }
+        .ds-modal-body::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Live Indicator Pulse */
+        .live-link-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Ghost Scrollbar Logic */
+        .ghost-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+            overflow-x: auto;
+        }
+        .ghost-scroll:hover {
+            scrollbar-color: rgba(128, 128, 128, 0.2) transparent;
+        }
+        .ghost-scroll::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .ghost-scroll::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 10px;
+        }
+        .ghost-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        /* Nav Item Logic */
+        .nav-item-active {
+            background-color: var(--bg-input) !important;
+            color: var(--text-main) !important;
+        }
+
+        /* Minimal scrollbars for high-end look */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(128, 128, 128, 0.2) transparent;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.4); }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.36.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-redux": "https://esm.sh/react-redux@^9.2.0",
+    "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit@^2.11.2"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="light">
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
