@@ -248,5 +248,18 @@ export const apiService = {
             console.error('Error fetching dashboard stats:', error);
             return null;
         }
+    },
+    async chatWithAI(prompt: string, context: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/dashboard/chat`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ prompt, context }),
+            });
+            return await handleResponse(response);
+        } catch (error) {
+            console.error('Error chatting with AI:', error);
+            throw error;
+        }
     }
 };

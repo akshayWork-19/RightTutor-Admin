@@ -6,6 +6,14 @@ import { RootState } from '../store';
 const Logs: React.FC = () => {
   const logs = useSelector((state: RootState) => state.admin.logs);
 
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleString();
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="p-8 animate-saas max-w-7xl mx-auto pb-24">
       <div className="ds-card">
@@ -38,7 +46,7 @@ const Logs: React.FC = () => {
               ) : (
                 logs.map((log) => (
                   <tr key={log.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                    <td className="ds-table-cell text-[12px] font-medium text-[var(--text-sub)]">{log.timestamp}</td>
+                    <td className="ds-table-cell text-[12px] font-medium text-[var(--text-sub)]">{formatDate(log.timestamp)}</td>
                     <td className="ds-table-cell text-[13px] font-bold text-[var(--text-main)]">{log.activity}</td>
                     <td className="ds-table-cell">
                       <div className="flex items-center gap-3">
@@ -70,7 +78,7 @@ const Logs: React.FC = () => {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-black text-[var(--text-main)] leading-snug">{log.activity}</p>
-                      <p className="text-[10px] text-[var(--text-muted)] mt-1 uppercase tracking-widest font-bold">{log.timestamp}</p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-1 uppercase tracking-widest font-bold">{formatDate(log.timestamp)}</p>
                     </div>
                     <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest shrink-0 ${log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
                       }`}>

@@ -1,7 +1,7 @@
 
 import { configureStore, createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { ContactInquiry, Appointment, Status, RetentionPeriod, ManualMatch } from '../types';
-import { GoogleGenAI } from '@google/genai';
+import { apiService } from '../services/apiService';
 
 export interface AdminUser {
   name: string;
@@ -80,20 +80,18 @@ export const triggerAiRequest = createAsyncThunk(
   'admin/triggerAiRequest',
   async (prompt: string, { getState }) => {
     const state = (getState() as RootState).admin;
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const dataContext = `
-      Admin Context: ${state.user?.name}
-      Current Repositories: ${state.repositories.map(r => r.name + ' (Assigned to: ' + r.assignedTo + ')').join(', ')}
-      Recent Operations: ${state.logs.slice(0, 5).map(l => l.activity).join('; ')}
-      Role: You are a professional administrative assistant for RightTutor. 
-      Tone: Helpful, direct, and concise.
+      Admin Name: ${state.user?.name}
+      Active Repositories: ${state.repositories.map(r => r.name).join(', ')}
+      Recent Activity: ${state.logs.slice(0, 3).map(l => l.activity).join('; ')}
     `;
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: { systemInstruction: dataContext, temperature: 0.7 }
-    });
-    return response.text || "I apologize, but I encountered a processing error. Please rephrase.";
+
+    try {
+      const response = await apiService.chatWithAI(prompt, dataContext);
+      return response || "I'm ready to assist. Please ask your question again.";
+    } catch (error: any) {
+      throw new Error(error.message || "Network timeout. Retrieval failed.");
+    }
   }
 );
 
@@ -129,7 +127,7 @@ const adminSlice = createSlice({
     triggerLiveSync: (state, action: PayloadAction<string>) => {
       const newLog: SystemLog = {
         id: Date.now().toString(),
-        timestamp: new Date().toLocaleString(),
+        timestamp: new Date().toISOString(),
         activity: `[LIVE SYNC] ${action.payload}`,
         admin: state.user?.name || 'Automated Sync',
         status: 'success'
@@ -245,7 +243,7 @@ const adminSlice = createSlice({
       const newLog = {
         ...action.payload,
         id: Date.now().toString(),
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toISOString()
       };
       state.logs.unshift(newLog);
       localStorage.setItem('rt_logs', JSON.stringify(state.logs.slice(0, 100)));

@@ -1,300 +1,300 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, setRepositories, addRepository, updateRepository, removeRepository, Repository, addLog } from '../store';
 import { apiService } from '../services/apiService';
-import { useEffect } from 'react';
+import { socketService } from '../services/socketService';
 
 const Repositories: React.FC = () => {
   const { repositories, user } = useSelector((state: RootState) => state.admin);
   const dispatch = useDispatch();
-
-  const fetchRepos = async () => {
-    const repos = await apiService.getRepositories();
-    dispatch(setRepositories(repos));
-  };
-  fetchRepos();
-
-  // Real-time updates
-  const socket = socketService.connect();
-  socket.on('data_updated', (payload) => {
-    if (payload.module === 'repositories') {
-      fetchRepos();
-    }
-  });
-}, [dispatch]);
-
-const [editingId, setEditingId] = useState<string | null>(null);
-const [editForm, setEditForm] = useState<Repository | null>(null);
-const [showAdd, setShowAdd] = useState(false);
-const [newForm, setNewForm] = useState({ name: '', url: '', category: 'Inquiries', assignedTo: '' });
-
-const handleSave = async () => {
-  if (editForm) {
-    try {
-      await apiService.updateRepository(editForm);
-      dispatch(updateRepository(editForm));
-      dispatch(addLog({ activity: `Updated Repository: ${editForm.name}`, admin: user?.name || 'Admin', status: 'info' }));
-      setEditingId(null);
-    } catch (error) {
-      alert("Failed to update repository");
-    }
-  }
-};
-
-const handleAddNew = async () => {
-  if (newForm.name && newForm.url) {
-    const repoData = {
-      ...newForm,
-      lastSync: 'Never',
-      createdAt: new Date().toISOString()
+  useEffect(() => {
+    const fetchRepos = async () => {
+      const repos = await apiService.getRepositories();
+      dispatch(setRepositories(repos));
     };
+    fetchRepos();
 
-    try {
-      const newRepo = await apiService.addRepository(repoData);
-      dispatch(addRepository(newRepo));
-      dispatch(addLog({ activity: `Created New Repository: ${newRepo.name}`, admin: user?.name || 'Admin', status: 'success' }));
-      setShowAdd(false);
-      setNewForm({ name: '', url: '', category: 'Inquiries', assignedTo: '' });
-    } catch (error) {
-      alert("Failed to create repository");
+    // Real-time updates
+    const socket = socketService.connect();
+    socket.on('data_updated', (payload: any) => {
+      if (payload.module === 'repositories') {
+        fetchRepos();
+      }
+    });
+  }, [dispatch]);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Repository | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newForm, setNewForm] = useState({ name: '', url: '', category: 'Inquiries', assignedTo: '' });
+
+  const handleSave = async () => {
+    if (editForm) {
+      try {
+        await apiService.updateRepository(editForm);
+        dispatch(updateRepository(editForm));
+        dispatch(addLog({ activity: `Updated Repository: ${editForm.name}`, admin: user?.name || 'Admin', status: 'info' }));
+        setEditingId(null);
+      } catch (error) {
+        alert("Failed to update repository");
+      }
     }
-  }
-};
+  };
 
-const handleDelete = async (id: string, name: string) => {
-  try {
-    await apiService.deleteRepository(id);
-    dispatch(removeRepository(id));
-    dispatch(addLog({ activity: `Deleted Repository: ${name}`, admin: user?.name || 'Admin', status: 'warning' }));
-  } catch (error) {
-    alert("Failed to delete repository");
-  }
-};
+  const handleAddNew = async () => {
+    if (newForm.name && newForm.url) {
+      const repoData = {
+        ...newForm,
+        lastSync: 'Never',
+        createdAt: new Date().toISOString()
+      };
 
-return (
-  <div className="p-8 animate-saas max-w-7xl mx-auto pb-24">
-    <div className="mb-8 flex items-center justify-between">
-      <div>
-        <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Data Repositories</h2>
-        <p className="text-xs text-neutral-500 mt-1">External sheet synchronization nodes</p>
+      try {
+        const newRepo = await apiService.addRepository(repoData);
+        dispatch(addRepository(newRepo));
+        dispatch(addLog({ activity: `Created New Repository: ${newRepo.name}`, admin: user?.name || 'Admin', status: 'success' }));
+        setShowAdd(false);
+        setNewForm({ name: '', url: '', category: 'Inquiries', assignedTo: '' });
+      } catch (error) {
+        alert("Failed to create repository");
+      }
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await apiService.deleteRepository(id);
+      dispatch(removeRepository(id));
+      dispatch(addLog({ activity: `Deleted Repository: ${name}`, admin: user?.name || 'Admin', status: 'warning' }));
+    } catch (error) {
+      alert("Failed to delete repository");
+    }
+  };
+
+  return (
+    <div className="p-8 animate-saas max-w-7xl mx-auto pb-24">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Data Repositories</h2>
+          <p className="text-xs text-neutral-500 mt-1">External sheet synchronization nodes</p>
+        </div>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="ds-button bg-neutral-900 text-white hover:bg-neutral-800"
+        >
+          Initialize Repository
+        </button>
       </div>
-      <button
-        onClick={() => setShowAdd(true)}
-        className="ds-button bg-neutral-900 text-white hover:bg-neutral-800"
-      >
-        Initialize Repository
-      </button>
-    </div>
 
-    <div className="ds-card">
-      <div className="ghost-scroll">
-        {/* Desktop View: Above 1024px */}
-        <table className="hidden lg:table w-full text-left border-collapse min-w-[900px]">
-          <thead>
-            <tr className="bg-[var(--bg-input)]">
-              <th className="ds-table-header">Node Name</th>
-              <th className="ds-table-header">Cloud Link</th>
-              <th className="ds-table-header">Category</th>
-              <th className="ds-table-header">Custody</th>
-              <th className="ds-table-header text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border-ds)]">
-            {repositories.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-8 py-24 text-center text-[var(--text-muted)] italic text-sm">No registry entries detected.</td>
+      <div className="ds-card">
+        <div className="ghost-scroll">
+          {/* Desktop View: Above 1024px */}
+          <table className="hidden lg:table w-full text-left border-collapse min-w-[900px]">
+            <thead>
+              <tr className="bg-[var(--bg-input)]">
+                <th className="ds-table-header">Node Name</th>
+                <th className="ds-table-header">Cloud Link</th>
+                <th className="ds-table-header">Category</th>
+                <th className="ds-table-header">Custody</th>
+                <th className="ds-table-header text-right">Actions</th>
               </tr>
-            ) : repositories.map((repo) => (
-              <tr key={repo.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                <td className="ds-table-cell">
-                  {editingId === repo.id ? (
-                    <input
-                      value={editForm?.name}
-                      onChange={(e) => setEditForm({ ...editForm!, name: e.target.value })}
-                      className="ds-input h-9"
-                    />
-                  ) : (
-                    <span className="text-[13px] font-bold text-[var(--text-main)]">{repo.name}</span>
-                  )}
-                </td>
-                <td className="ds-table-cell">
-                  {editingId === repo.id ? (
-                    <input
-                      value={editForm?.url}
-                      onChange={(e) => setEditForm({ ...editForm!, url: e.target.value })}
-                      className="ds-input h-9"
-                    />
-                  ) : (
-                    <a href={repo.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline text-[13px] truncate max-w-[180px] block font-medium">Sheets Interface</a>
-                  )}
-                </td>
-                <td className="ds-table-cell">
-                  {editingId === repo.id ? (
-                    <select
-                      value={editForm?.category}
-                      onChange={(e) => setEditForm({ ...editForm!, category: e.target.value as any })}
-                      className="ds-input h-9"
-                    >
-                      <option value="Inquiries">Inquiries</option>
-                      <option value="Bookings">Bookings</option>
-                      <option value="Manual Matches">Manual Matches</option>
-                    </select>
-                  ) : (
-                    <span className="text-[11px] font-bold text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-md uppercase tracking-wider">{repo.category || 'N/A'}</span>
-                  )}
-                </td>
-                <td className="ds-table-cell">
-                  {editingId === repo.id ? (
-                    <input
-                      value={editForm?.assignedTo}
-                      onChange={(e) => setEditForm({ ...editForm!, assignedTo: e.target.value })}
-                      className="ds-input h-9"
-                    />
-                  ) : (
-                    <span className="text-[13px] font-medium text-[var(--text-sub)]">{repo.assignedTo}</span>
-                  )}
-                </td>
-                <td className="ds-table-cell text-right">
-                  <div className="flex justify-end gap-2">
+            </thead>
+            <tbody className="divide-y divide-[var(--border-ds)]">
+              {repositories.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-8 py-24 text-center text-[var(--text-muted)] italic text-sm">No registry entries detected.</td>
+                </tr>
+              ) : repositories.map((repo) => (
+                <tr key={repo.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                  <td className="ds-table-cell">
                     {editingId === repo.id ? (
-                      <button onClick={handleSave} className="px-3 py-1.5 bg-emerald-500 text-white text-[11px] font-bold rounded-lg shadow-sm">Save</button>
+                      <input
+                        value={editForm?.name}
+                        onChange={(e) => setEditForm({ ...editForm!, name: e.target.value })}
+                        className="ds-input h-9"
+                      />
                     ) : (
-                      <button onClick={() => { setEditingId(repo.id); setEditForm(repo); }} className="min-h-[44px] min-w-[44px] px-3 py-1.5 bg-[var(--bg-input)] text-[var(--text-main)] text-[11px] font-bold rounded-lg hover:bg-[var(--bg-hover)] border border-[var(--border-ds)]">Modify</button>
+                      <span className="text-[13px] font-bold text-[var(--text-main)]">{repo.name}</span>
                     )}
-                    <button onClick={() => handleDelete(repo.id, repo.name)} className="min-h-[44px] min-w-[44px] px-3 py-1.5 bg-rose-500/10 text-rose-500 text-[11px] font-bold rounded-lg hover:bg-rose-500/20 border border-rose-500/20">Drop</button>
+                  </td>
+                  <td className="ds-table-cell">
+                    {editingId === repo.id ? (
+                      <input
+                        value={editForm?.url}
+                        onChange={(e) => setEditForm({ ...editForm!, url: e.target.value })}
+                        className="ds-input h-9"
+                      />
+                    ) : (
+                      <a href={repo.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline text-[13px] truncate max-w-[180px] block font-medium">Sheets Interface</a>
+                    )}
+                  </td>
+                  <td className="ds-table-cell">
+                    {editingId === repo.id ? (
+                      <select
+                        value={editForm?.category}
+                        onChange={(e) => setEditForm({ ...editForm!, category: e.target.value as any })}
+                        className="ds-input h-9"
+                      >
+                        <option value="Inquiries">Inquiries</option>
+                        <option value="Bookings">Bookings</option>
+                        <option value="Manual Matches">Manual Matches</option>
+                      </select>
+                    ) : (
+                      <span className="text-[11px] font-bold text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-md uppercase tracking-wider">{repo.category || 'N/A'}</span>
+                    )}
+                  </td>
+                  <td className="ds-table-cell">
+                    {editingId === repo.id ? (
+                      <input
+                        value={editForm?.assignedTo}
+                        onChange={(e) => setEditForm({ ...editForm!, assignedTo: e.target.value })}
+                        className="ds-input h-9"
+                      />
+                    ) : (
+                      <span className="text-[13px] font-medium text-[var(--text-sub)]">{repo.assignedTo}</span>
+                    )}
+                  </td>
+                  <td className="ds-table-cell text-right">
+                    <div className="flex justify-end gap-2">
+                      {editingId === repo.id ? (
+                        <button onClick={handleSave} className="px-3 py-1.5 bg-emerald-500 text-white text-[11px] font-bold rounded-lg shadow-sm">Save</button>
+                      ) : (
+                        <button onClick={() => { setEditingId(repo.id); setEditForm(repo); }} className="min-h-[44px] min-w-[44px] px-3 py-1.5 bg-[var(--bg-input)] text-[var(--text-main)] text-[11px] font-bold rounded-lg hover:bg-[var(--bg-hover)] border border-[var(--border-ds)]">Modify</button>
+                      )}
+                      <button onClick={() => handleDelete(repo.id, repo.name)} className="min-h-[44px] min-w-[44px] px-3 py-1.5 bg-rose-500/10 text-rose-500 text-[11px] font-bold rounded-lg hover:bg-rose-500/20 border border-rose-500/20">Drop</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Mobile View: Cards Below 1024px */}
+          <div className="lg:hidden p-4 space-y-4">
+            {repositories.length === 0 ? (
+              <div className="py-12 text-center text-[var(--text-muted)] italic text-sm">No repositories detected</div>
+            ) : repositories.map((repo) => (
+              <div key={repo.id} className="ds-card p-5 space-y-4 bg-[var(--bg-input)] border border-[var(--border-ds)]">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-bold text-[var(--text-main)] truncate">{repo.name}</p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5 font-bold uppercase tracking-widest">{repo.category || 'N/A'}</p>
                   </div>
-                </td>
-              </tr>
+                  <a
+                    href={repo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 bg-[var(--bg-card)] border border-[var(--border-ds)] rounded-lg text-blue-500 hover:bg-[var(--bg-hover)] transition-colors"
+                    title="Open in Sheets"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-[var(--border-ds)] pt-4">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Assignee</p>
+                    <p className="text-xs font-medium text-[var(--text-sub)] truncate">{repo.assignedTo || 'Unassigned'}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Last Sync</p>
+                    <p className="text-xs font-medium text-[var(--text-sub)] truncate">{repo.lastSync || 'Never'}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => { setEditingId(repo.id); setEditForm(repo); }}
+                    className="flex-1 min-h-[44px] py-2 bg-[var(--bg-card)] border border-[var(--border-ds)] rounded-xl text-[10px] font-bold text-[var(--text-main)] uppercase tracking-widest hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Modify
+                  </button>
+                  <button
+                    onClick={() => handleDelete(repo.id, repo.name)}
+                    className="flex-1 min-h-[44px] py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-bold text-rose-500 uppercase tracking-widest hover:bg-rose-500/20 transition-colors"
+                  >
+                    Drop
+                  </button>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-
-        {/* Mobile View: Cards Below 1024px */}
-        <div className="lg:hidden p-4 space-y-4">
-          {repositories.length === 0 ? (
-            <div className="py-12 text-center text-[var(--text-muted)] italic text-sm">No repositories detected</div>
-          ) : repositories.map((repo) => (
-            <div key={repo.id} className="ds-card p-5 space-y-4 bg-[var(--bg-input)] border border-[var(--border-ds)]">
-              <div className="flex justify-between items-start gap-4">
-                <div className="overflow-hidden">
-                  <p className="text-sm font-bold text-[var(--text-main)] truncate">{repo.name}</p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5 font-bold uppercase tracking-widest">{repo.category || 'N/A'}</p>
-                </div>
-                <a
-                  href={repo.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-2 bg-[var(--bg-card)] border border-[var(--border-ds)] rounded-lg text-blue-500 hover:bg-[var(--bg-hover)] transition-colors"
-                  title="Open in Sheets"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                </a>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-t border-[var(--border-ds)] pt-4">
-                <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Assignee</p>
-                  <p className="text-xs font-medium text-[var(--text-sub)] truncate">{repo.assignedTo || 'Unassigned'}</p>
-                </div>
-                <div className="space-y-1 text-right">
-                  <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Last Sync</p>
-                  <p className="text-xs font-medium text-[var(--text-sub)] truncate">{repo.lastSync || 'Never'}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => { setEditingId(repo.id); setEditForm(repo); }}
-                  className="flex-1 min-h-[44px] py-2 bg-[var(--bg-card)] border border-[var(--border-ds)] rounded-xl text-[10px] font-bold text-[var(--text-main)] uppercase tracking-widest hover:bg-[var(--bg-hover)] transition-colors"
-                >
-                  Modify
-                </button>
-                <button
-                  onClick={() => handleDelete(repo.id, repo.name)}
-                  className="flex-1 min-h-[44px] py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-bold text-rose-500 uppercase tracking-widest hover:bg-rose-500/20 transition-colors"
-                >
-                  Drop
-                </button>
-              </div>
-            </div>
-          ))}
+          </div>
         </div>
       </div>
-    </div>
 
-    {showAdd && (
-      <div className="ds-modal-overlay">
-        <div className="ds-modal-content">
-          <div className="px-8 py-6 border-b border-neutral-100 flex justify-between items-center bg-white">
-            <div>
-              <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Provision Repository</h3>
-              <p className="text-xs text-neutral-500 mt-1">Connect new synchronization endpoint</p>
-            </div>
-            <button
-              onClick={() => setShowAdd(false)}
-              className="p-2 hover:bg-neutral-100 rounded-lg text-neutral-400"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-
-          <div className="ds-modal-body space-y-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Internal Reference</label>
-              <input
-                placeholder="e.g. Master Admissions Log"
-                value={newForm.name}
-                onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
-                className="ds-input"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Sheets Endpoint URL</label>
-              <input
-                placeholder="https://docs.google.com/spreadsheets/d/..."
-                value={newForm.url}
-                onChange={(e) => setNewForm({ ...newForm, url: e.target.value })}
-                className="ds-input"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Data Category</label>
-              <select
-                value={newForm.category}
-                onChange={(e) => setNewForm({ ...newForm, category: e.target.value })}
-                className="ds-input"
+      {showAdd && (
+        <div className="ds-modal-overlay">
+          <div className="ds-modal-content">
+            <div className="px-8 py-6 border-b border-neutral-100 flex justify-between items-center bg-white">
+              <div>
+                <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Provision Repository</h3>
+                <p className="text-xs text-neutral-500 mt-1">Connect new synchronization endpoint</p>
+              </div>
+              <button
+                onClick={() => setShowAdd(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg text-neutral-400"
               >
-                <option value="Inquiries">Inquiries</option>
-                <option value="Bookings">Bookings</option>
-                <option value="Manual Matches">Manual Matches</option>
-              </select>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Accountable Admin</label>
-              <input
-                placeholder="Assignee Full Name"
-                value={newForm.assignedTo}
-                onChange={(e) => setNewForm({ ...newForm, assignedTo: e.target.value })}
-                className="ds-input"
-              />
-            </div>
-          </div>
 
-          <div className="px-8 py-6 border-t border-neutral-100 bg-neutral-50/50 flex flex-col gap-3">
-            <button
-              onClick={handleAddNew}
-              className="ds-button bg-neutral-900 text-white hover:bg-neutral-800 w-full"
-            >
-              Provision Link
-            </button>
-            <p className="text-[10px] text-neutral-400 text-center font-bold tracking-widest uppercase">Encrypted Endpoint Protocol</p>
+            <div className="ds-modal-body space-y-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Internal Reference</label>
+                <input
+                  placeholder="e.g. Master Admissions Log"
+                  value={newForm.name}
+                  onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
+                  className="ds-input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Sheets Endpoint URL</label>
+                <input
+                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                  value={newForm.url}
+                  onChange={(e) => setNewForm({ ...newForm, url: e.target.value })}
+                  className="ds-input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Data Category</label>
+                <select
+                  value={newForm.category}
+                  onChange={(e) => setNewForm({ ...newForm, category: e.target.value })}
+                  className="ds-input"
+                >
+                  <option value="Inquiries">Inquiries</option>
+                  <option value="Bookings">Bookings</option>
+                  <option value="Manual Matches">Manual Matches</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Accountable Admin</label>
+                <input
+                  placeholder="Assignee Full Name"
+                  value={newForm.assignedTo}
+                  onChange={(e) => setNewForm({ ...newForm, assignedTo: e.target.value })}
+                  className="ds-input"
+                />
+              </div>
+            </div>
+
+            <div className="px-8 py-6 border-t border-neutral-100 bg-neutral-50/50 flex flex-col gap-3">
+              <button
+                onClick={handleAddNew}
+                className="ds-button bg-neutral-900 text-white hover:bg-neutral-800 w-full"
+              >
+                Provision Link
+              </button>
+              <p className="text-[10px] text-neutral-400 text-center font-bold tracking-widest uppercase">Encrypted Endpoint Protocol</p>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 };
 
 export default Repositories;
