@@ -78,7 +78,7 @@ const initialState: AdminState = {
 
 export const triggerAiRequest = createAsyncThunk(
   'admin/triggerAiRequest',
-  async (prompt: string, { getState }) => {
+  async (prompt: string, { getState, rejectWithValue }) => {
     const state = (getState() as RootState).admin;
     const dataContext = `
       Admin Name: ${state.user?.name}
@@ -90,7 +90,8 @@ export const triggerAiRequest = createAsyncThunk(
       const response = await apiService.chatWithAI(prompt, dataContext);
       return response || "I'm ready to assist. Please ask your question again.";
     } catch (error: any) {
-      throw new Error(error.message || "Network timeout. Retrieval failed.");
+      console.error("AI Thunk Error:", error);
+      return rejectWithValue(error.message || "Network timeout. Retrieval failed.");
     }
   }
 );
@@ -273,9 +274,12 @@ const adminSlice = createSlice({
         localStorage.setItem('rt_ai_history', JSON.stringify(state.aiMessages));
         localStorage.setItem('rt_ai_unread', 'true');
       })
-      .addCase(triggerAiRequest.rejected, (state) => {
+      .addCase(triggerAiRequest.rejected, (state, action) => {
         state.isAiGenerating = false;
-        state.aiMessages.push({ role: 'ai', text: "Network timeout. Retrieval failed." });
+        state.aiMessages.push({
+          role: 'ai',
+          text: (action.payload as string) || action.error.message || "Network timeout. Retrieval failed."
+        });
         state.hasUnreadAiResponse = true;
       });
   }
