@@ -1,5 +1,5 @@
 {
-  "name": "Elite Admin Dashboard",
+  "name": "Right Tutor Admin Dashboard",
   "description": "A premium React-based admin dashboard for managing contact inquiries, parent appointments, and specialized teacher requests with AI-powered insights and Google Sheets synchronization capabilities.",
   "requestFramePermissions": [
     "camera",

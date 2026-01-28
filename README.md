@@ -1,6 +1,6 @@
-# 🛡️ Elite Admin Dashboard
+# 🛡️ Right Tutor Admin Dashboard
 
-The mission control center for Elite Tutors. A high-performance, real-time administrative interface for managing inquiries, consultations, and tutor matches.
+The mission control center for Right Tutor. A high-performance, real-time administrative interface for managing inquiries, consultations, and tutor matches.
 
 ## 📊 Administrative Modules
 
