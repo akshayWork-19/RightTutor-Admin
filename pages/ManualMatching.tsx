@@ -14,9 +14,7 @@ const ManualMatching: React.FC = () => {
 
   const fetchMatches = async () => {
     const matches = await apiService.getManualMatches();
-    if (matches.length > 0) {
-      dispatch(setManualMatches(matches));
-    }
+    dispatch(setManualMatches(matches));
   };
 
   useEffect(() => {

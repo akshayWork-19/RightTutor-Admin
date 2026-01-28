@@ -13,22 +13,20 @@ const AppointmentDetails: React.FC = () => {
 
   const fetchBookings = async () => {
     const bookings = await apiService.getBookings();
-    if (bookings.length > 0) {
-      // Map backend data to frontend structure
-      const formattedBookings = bookings.map((b: any) => ({
-        id: b.id,
-        parentName: b.parentName || b.name || 'Unknown',
-        childName: b.childName || 'Intake Pending',
-        email: b.email || '',
-        phone: b.phone || 'N/A',
-        date: b.date || '',
-        time: b.time || '',
-        topic: b.topic || 'General Consultation',
-        status: b.status || Status.SCHEDULED,
-        matchProfile: b.matchProfile || undefined
-      }));
-      dispatch(setAppointments(formattedBookings));
-    }
+    // Map backend data to frontend structure (always do this to ensure consistency)
+    const formattedBookings = bookings.map((b: any) => ({
+      id: b.id,
+      parentName: b.parentName || b.name || 'Unknown',
+      childName: b.childName || 'Intake Pending',
+      email: b.email || '',
+      phone: b.phone || 'N/A',
+      date: b.date || '',
+      time: b.time || '',
+      topic: b.topic || 'General Consultation',
+      status: b.status || Status.SCHEDULED,
+      matchProfile: b.matchProfile || undefined
+    }));
+    dispatch(setAppointments(formattedBookings));
   };
 
   useEffect(() => {

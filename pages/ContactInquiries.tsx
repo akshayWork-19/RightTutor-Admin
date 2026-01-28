@@ -14,20 +14,18 @@ const ContactInquiries: React.FC = () => {
 
   const fetchContacts = async () => {
     const contacts = await apiService.getContacts();
-    if (contacts.length > 0) {
-      // Map backend data to frontend structure
-      const formattedContacts = contacts.map((c: any) => ({
-        id: c.id,
-        name: c.name || 'Unknown',
-        email: c.email || '',
-        phone: c.phone || '',
-        subject: c.subject || 'General Inquiry',
-        message: c.message || '',
-        date: c.date || new Date().toISOString().split('T')[0], // Fallback date
-        status: c.status || Status.PENDING
-      }));
-      dispatch(setInquiries(formattedContacts));
-    }
+    // Map backend data to frontend structure
+    const formattedContacts = contacts.map((c: any) => ({
+      id: c.id,
+      name: c.name || 'Unknown',
+      email: c.email || '',
+      phone: c.phone || '',
+      subject: c.subject || 'General Inquiry',
+      message: c.message || '',
+      date: c.date || new Date().toISOString().split('T')[0], // Fallback date
+      status: c.status || Status.PENDING
+    }));
+    dispatch(setInquiries(formattedContacts));
   };
 
   useEffect(() => {
