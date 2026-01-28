@@ -15,12 +15,13 @@ const Logs: React.FC = () => {
             <p className="text-xs text-[var(--text-sub)] mt-1 italic">Historical modification logs</p>
           </div>
           <div className="px-3 py-1 bg-[var(--bg-input)] rounded-lg text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest border border-[var(--border-ds)]">
-             {logs.length} Sequential Records
+            {logs.length} Sequential Records
           </div>
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+
+        <div className="ghost-scroll">
+          {/* Desktop View: Above 1024px */}
+          <table className="hidden lg:table w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-[var(--bg-input)]">
                 <th className="ds-table-header">Timeline</th>
@@ -40,17 +41,16 @@ const Logs: React.FC = () => {
                     <td className="ds-table-cell text-[12px] font-medium text-[var(--text-sub)]">{log.timestamp}</td>
                     <td className="ds-table-cell text-[13px] font-bold text-[var(--text-main)]">{log.activity}</td>
                     <td className="ds-table-cell">
-                       <div className="flex items-center gap-3">
-                         <div className="w-6 h-6 rounded-md bg-[var(--bg-input)] border border-[var(--border-ds)] flex items-center justify-center text-[var(--text-main)] font-bold text-[9px]">
-                           {log.admin.charAt(0)}
-                         </div>
-                         <span className="text-[13px] font-bold text-[var(--text-sub)]">{log.admin}</span>
-                       </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-md bg-[var(--bg-input)] border border-[var(--border-ds)] flex items-center justify-center text-[var(--text-main)] font-bold text-[9px]">
+                          {log.admin.charAt(0)}
+                        </div>
+                        <span className="text-[13px] font-bold text-[var(--text-sub)]">{log.admin}</span>
+                      </div>
                     </td>
                     <td className="ds-table-cell text-right">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest ${
-                        log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest ${log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                        }`}>
                         {log.status}
                       </span>
                     </td>
@@ -59,6 +59,35 @@ const Logs: React.FC = () => {
               )}
             </tbody>
           </table>
+
+          {/* Mobile View: Cards Below 1024px */}
+          <div className="lg:hidden p-4 space-y-4">
+            {logs.length === 0 ? (
+              <div className="py-12 text-center text-[var(--text-muted)] italic text-sm">Empty log stream</div>
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="ds-card p-5 space-y-4 bg-[var(--bg-input)] border border-[var(--border-ds)]">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-black text-[var(--text-main)] leading-snug">{log.activity}</p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-1 uppercase tracking-widest font-bold">{log.timestamp}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest shrink-0 ${log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                      }`}>
+                      {log.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-3 border-t border-[var(--border-ds)]">
+                    <div className="w-6 h-6 rounded-md bg-[var(--bg-card)] border border-[var(--border-ds)] flex items-center justify-center text-[var(--text-main)] font-bold text-[9px]">
+                      {log.admin.charAt(0)}
+                    </div>
+                    <span className="text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-wider">{log.admin}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
