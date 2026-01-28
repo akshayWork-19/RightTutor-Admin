@@ -1,20 +1,62 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🛡️ Elite Admin Dashboard
 
-# Run and deploy your AI Studio app
+The mission control center for Elite Tutors. A high-performance, real-time administrative interface for managing inquiries, consultations, and tutor matches.
 
-This contains everything you need to run your app locally.
+## 📊 Administrative Modules
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Flz_pFTGTrrp1dxeYf1kRsibBvy-Hrku
+### 1. Unified Inbox
+- Real-time parent inquiries fetched via Socket.io.
+- **AI Analysis**: One-click analysis of messages to generate summaries and professional draft replies.
 
-## Run Locally
+### 2. Consultation Registry
+- Manage student bookings and consultation schedules.
+- Full CRUD operations synced instantly with Google Sheets.
 
-**Prerequisites:**  Node.js
+### 3. Match Pipeline
+- Specialized "Manual Matching" module for complex tutor-student pairings.
+- Pipeline status tracking (Trial Pending → Assigned → Dropped).
 
+### 4. Node Management (Repositories)
+- Provision and manage "Data Repositories" (Google Sheets integration points).
+- Dynamic linking of sheet URLs to specific system modules.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+
+## 🛠️ Internal Architecture
+
+- **State Management**: Redux Toolkit for consistent global state across the dashboard.
+- **Real-time Sync**: Socket.io integration via `socketService.ts` to receive instant updates.
+- **AI Integration**: Custom wrapper for Gemini 1.5 Flash API.
+- **Theming**: Dark mode optimized "SaaS-style" interface with glassmorphic cards.
+
+---
+
+## 📁 Project Structure
+
+- `src/pages/`: Specialized admin views (AiAssistant, AppointmentDetails, ContactInquiries, ManualMatching, Repositories).
+- `src/store/`: Redux slices for admin data, logging, and user state.
+- `src/services/`: API and Socket integration layers.
+- `src/components/`: Admin-specific UI components (StatCards, ModalOverlays).
+
+---
+
+## ⚡ Deployment & Configuration
+
+Designed to be hosted alongside the backend/main site.
+
+**Environment Variables**:
+```ini
+VITE_API_BASE_URL=https://your-api.com
+```
+
+**Development**:
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## 🔒 Security
+- **JWT Protection**: All requests routed through `apiService.ts` include Bearer tokens.
+- **Protected Routes**: Navigation is gated by authentication state managed in Redux.
