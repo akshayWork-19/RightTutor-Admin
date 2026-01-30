@@ -14,6 +14,18 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       }
+    },
+    build: {
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-ui': ['lucide-react', 'framer-motion'],
+            'vendor-redux': ['@reduxjs/toolkit', 'react-redux'],
+          },
+        },
+      },
     }
   };
 });

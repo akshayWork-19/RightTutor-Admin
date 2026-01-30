@@ -26,8 +26,14 @@ The mission control center for Right Tutor. A high-performance, real-time admini
 
 - **State Management**: Redux Toolkit for consistent global state across the dashboard.
 - **Real-time Sync**: Socket.io integration via `socketService.ts` to receive instant updates.
-- **AI Integration**: Custom wrapper for Gemini 1.5 Flash API.
+- **AI Integration (v1.1)**: Enhanced "Analyst Mode" with **Full Database Access**.
+    - The AI now receives cached snapshots of the *entire* Contacts, Bookings, and Matches tables.
+    - Enables deep queries like "Show me all physics inquiries from last week" directly from the dashboard.
 - **Theming**: Dark mode optimized "SaaS-style" interface with glassmorphic cards.
+
+## ⚡ Performance Engineering (v1.1)
+- **Build Optimization**: Configured `manualChunks` to split React, Redux, and UI libraries into separate cacheable files.
+- **Backend Sync**: Leverages the new "Smart Caching" layer in the backend for 99% faster stat retrieval.
 
 ---
 
