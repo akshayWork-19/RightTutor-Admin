@@ -255,13 +255,40 @@ const adminSlice = createSlice({
       localStorage.setItem('rt_retention_enabled', String(action.payload.enabled));
       localStorage.setItem('rt_retention_days', String(action.payload.days));
     },
-    runCleanup: (state) => {
+    runManualCleanup: (state) => {
+      // Manual cleanup clears ALL logs regardless of toggle state
+      state.logs = [];
+      localStorage.setItem('rt_logs', JSON.stringify(state.logs));
+      const newLog: SystemLog = {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        activity: 'Manual cleanup executed - all logs cleared',
+        admin: state.user?.name || 'Admin',
+        status: 'info'
+      };
+      state.logs.unshift(newLog);
+      localStorage.setItem('rt_logs', JSON.stringify(state.logs));
+    },
+    runAutoCleanup: (state) => {
+      // Automatic cleanup only runs when enabled and removes logs older than retention period
       if (!state.retentionEnabled) return;
       const limitDate = new Date(Date.now() - state.retentionDays * 24 * 60 * 60 * 1000);
+      const beforeCount = state.logs.length;
       state.logs = state.logs.filter(log => new Date(log.timestamp) > limitDate);
-      state.repositories = state.repositories.filter(repo => new Date(repo.createdAt) > limitDate);
+      const afterCount = state.logs.length;
       localStorage.setItem('rt_logs', JSON.stringify(state.logs));
-      localStorage.setItem('rt_repos', JSON.stringify(state.repositories));
+
+      if (beforeCount > afterCount) {
+        const newLog: SystemLog = {
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+          activity: `Auto-cleanup removed ${beforeCount - afterCount} old log(s)`,
+          admin: 'System',
+          status: 'info'
+        };
+        state.logs.unshift(newLog);
+        localStorage.setItem('rt_logs', JSON.stringify(state.logs));
+      }
     }
   },
   extraReducers: (builder) => {
@@ -292,7 +319,7 @@ export const {
   setInquiries, addInquiry, updateInquiry, removeInquiry,
   setAppointments, addAppointment, updateAppointment, removeAppointment,
   setManualMatches, addManualMatch, updateManualMatch, removeManualMatch,
-  setRetention, runCleanup,
+  setRetention, runManualCleanup, runAutoCleanup,
   setAiDraft, addUserMessage, clearAiChat, markAiAsRead, toggleTheme, toggleSidebar, setSidebarOpen
 } = adminSlice.actions;
 

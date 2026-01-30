@@ -2,7 +2,8 @@
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Provider, useSelector, useDispatch } from 'react-redux';
-import { store, RootState, logout, addLog, runCleanup, setInquiries, setAppointments, setManualMatches } from './store';
+import { store, RootState, logout, addLog, runAutoCleanup, setInquiries, setAppointments, setManualMatches } from './store';
+import { useAutoCleanup } from './hooks/useAutoCleanup';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Dashboard from './pages/Dashboard';
@@ -22,6 +23,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user, theme } = useSelector((state: RootState) => state.admin);
+
+  // Enable automatic cleanup
+  useAutoCleanup();
 
   // Initialize data and Theme logic
   useEffect(() => {
@@ -54,7 +58,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         }
       ]));
     }
-    dispatch(runCleanup());
   }, [dispatch, theme]);
 
   const getPageTitle = () => {
@@ -77,8 +80,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <div className="flex h-screen w-full transition-colors duration-300 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar 
-          title={getPageTitle()} 
+        <TopBar
+          title={getPageTitle()}
           onLogout={() => dispatch(logout())}
           adminUser={user}
         />
