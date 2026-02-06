@@ -14,18 +14,29 @@ const AppointmentDetails: React.FC = () => {
   const fetchBookings = async () => {
     const bookings = await apiService.getBookings();
     // Map backend data to frontend structure (always do this to ensure consistency)
-    const formattedBookings = bookings.map((b: any) => ({
-      id: b.id,
-      parentName: b.parentName || b.name || 'Unknown',
-      childName: b.childName || 'Intake Pending',
-      email: b.email || '',
-      phone: b.phone || 'N/A',
-      date: b.date || '',
-      time: b.time || '',
-      topic: b.topic || 'General Consultation',
-      status: b.status || Status.SCHEDULED,
-      matchProfile: b.matchProfile || undefined
-    }));
+    const formattedBookings = bookings.map((b: any) => {
+      let displayTime = b.time || '';
+      if (b.date && b.time && !b.time.includes(',')) {
+        try {
+          const dateObj = new Date(b.date + ' ' + b.time);
+          displayTime = isNaN(dateObj.getTime()) ? `${b.date}, ${b.time}` : dateObj.toLocaleString();
+        } catch (e) {
+          displayTime = `${b.date}, ${b.time}`;
+        }
+      }
+      return {
+        id: b.id,
+        parentName: b.parentName || b.name || 'Unknown',
+        childName: b.childName || 'Intake Pending',
+        email: b.email || '',
+        phone: b.phone || 'N/A',
+        date: b.date || '',
+        time: displayTime,
+        topic: b.topic || 'General Consultation',
+        status: b.status || Status.SCHEDULED,
+        matchProfile: b.matchProfile || undefined
+      };
+    });
     dispatch(setAppointments(formattedBookings));
   };
 
@@ -245,8 +256,7 @@ const AppointmentDetails: React.FC = () => {
                 <th className="ds-table-header w-12 text-center">Attended</th>
                 <th className="ds-table-header">Name</th>
                 <th className="ds-table-header">Phone</th>
-                <th className="ds-table-header">Date</th>
-                <th className="ds-table-header">Time</th>
+                <th className="ds-table-header">Consultation Time</th>
                 <th className="ds-table-header text-right">Actions</th>
               </tr>
             </thead>
@@ -270,8 +280,7 @@ const AppointmentDetails: React.FC = () => {
                     <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Child: {apt.childName}</p>
                   </td>
                   <td className="ds-table-cell text-[13px] font-medium text-[var(--text-sub)]">{apt.phone}</td>
-                  <td className="ds-table-cell text-[13px] font-bold text-[var(--text-main)]">{apt.date}</td>
-                  <td className="ds-table-cell text-[13px] font-medium text-[var(--text-sub)]">{apt.time}</td>
+                  <td className="ds-table-cell text-[13px] font-bold text-[var(--text-main)] min-w-[200px]">{apt.time}</td>
                   <td className="ds-table-cell text-right">
                     <div className="flex justify-end gap-2.5">
                       <button
@@ -317,19 +326,15 @@ const AppointmentDetails: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 border-t border-[var(--border-ds)] pt-4">
+                  <div className="grid grid-cols-1 gap-4 border-t border-[var(--border-ds)] pt-4">
                     <div className="space-y-1">
                       <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Phone</p>
                       <p className="text-xs font-medium text-[var(--text-sub)]">{apt.phone}</p>
                     </div>
-                    <div className="space-y-1 text-right">
-                      <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Date</p>
-                      <p className="text-xs font-medium text-[var(--text-sub)]">{apt.date}</p>
-                    </div>
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Time Slot</p>
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Consultation Time</p>
                     <p className="text-xs font-medium text-[var(--text-main)]">{apt.time}</p>
                   </div>
                 </div>

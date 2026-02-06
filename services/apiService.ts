@@ -3,6 +3,11 @@ export const API_BASE_URL = rawBaseUrl.endsWith('/api/v1') ? rawBaseUrl : `${raw
 
 const getHeaders = () => {
     const token = localStorage.getItem('token');
+    if (token) {
+        console.log(`[API] Authorizing with token: ${token.substring(0, 10)}...`);
+    } else {
+        console.warn('[API] No auth token found');
+    }
     return {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
